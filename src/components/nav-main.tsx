@@ -1,6 +1,6 @@
 "use client"
 
-import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
+import { IconCirclePlusFilled, IconX, type Icon } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -47,7 +47,7 @@ export function NavMain({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem onClick={()=> router.push(item.url)} key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
+              <SidebarMenuButton  tooltip={item.title}>
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
               </SidebarMenuButton>

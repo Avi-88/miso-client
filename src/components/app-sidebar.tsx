@@ -33,6 +33,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 
 
@@ -159,7 +160,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar> ) 
 
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -168,7 +169,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar> ) 
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+                <IconInnerShadowTop  className="!size-5 text-orange-400" />
                 <span className="text-base font-semibold">Miso</span>
               </a>
             </SidebarMenuButton>
@@ -177,7 +178,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar> ) 
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavDocuments title="Feb 3" items={data.documents} /> */}
+        {/* <NavDocuments title="Feb 3" items={data.documents} />
+        <NavDocuments title="Feb 4" items={data.documents} /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
