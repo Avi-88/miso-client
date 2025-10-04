@@ -33,6 +33,7 @@ export interface CreateSessionRequest {
 }
 
 export class ApiClient {
+  
   private async refreshToken(): Promise<string | null> {
     const refreshToken = localStorage.getItem('refresh_token')
     

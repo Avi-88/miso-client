@@ -33,7 +33,7 @@ export default function SignIn() {
         localStorage.setItem('user', JSON.stringify(response.data.user))
         
         // Redirect to main app
-        router.push('/')
+        router.push('/dashboard')
       }
     } catch (err) {
       setError('An unexpected error occurred')

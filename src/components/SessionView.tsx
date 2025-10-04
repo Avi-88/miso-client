@@ -52,7 +52,7 @@ export const SessionView = ({
   }, [agentState, sessionStarted, room]);
 
   return (
-      <div className="">
+      <div className="flex flex-col justify-center items-center">
             <div className="text-center mb-8">
               <h1 className="text-4xl font-bold text-gray-900 mb-4">Hey {user.name}!</h1>
               <p className="text-sm text-gray-600 max-w-2xl">
