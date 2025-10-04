@@ -7,7 +7,7 @@ import {
   IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"
-import {useRouter} from "next/navigation"
+import { apiClient } from "@/lib/api"
 import {
   Avatar,
   AvatarFallback,
@@ -40,11 +40,8 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const router = useRouter()
   const handleLogout = () => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('user')
-    router.push('/')
+    apiClient.logout()
   }
 
   return (

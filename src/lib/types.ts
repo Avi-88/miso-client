@@ -12,9 +12,6 @@ export interface AppConfig {
   pageDescription: string;
   companyName: string;
 
-  supportsChatInput: boolean;
-  supportsVideoInput: boolean;
-  supportsScreenShare: boolean;
   isPreConnectBufferEnabled: boolean;
 
   logo: string;

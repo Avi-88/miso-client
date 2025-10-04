@@ -1,23 +1,46 @@
 'use client'
 
 import { AppSidebar } from "@/components/app-sidebar"
-import { AIAgentSphere } from "@/components/ai-agent-sphere"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
-import { IconX } from "@tabler/icons-react"
+import { useState, useEffect, useMemo } from "react"
+import { Room, RoomEvent } from 'livekit-client';
+import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-react';
+import { apiClient } from '@/lib/api';
+import { SessionView } from "@/components/SessionView"
 
-export default function Page() {
+
+export default function Page( ) {
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<any>(null)
-  const [isAgentActive, setIsAgentActive] = useState(false)
   const router = useRouter()
   const [open, setOpen] = useState(false)
+
+  const room = useMemo(() => new Room(), []);
+  const [sessionStarted, setSessionStarted] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  useEffect(() => {
+    const onDisconnected = () => {
+      console.log("disconnected")
+      setSessionStarted(false);
+      setIsConnecting(false);
+    };
+    const onMediaDevicesError = (error: Error) => {
+      console.log("media error", error.message);
+    };
+    room.on(RoomEvent.MediaDevicesError, onMediaDevicesError);
+    room.on(RoomEvent.Disconnected, onDisconnected);
+    return () => {
+      room.off(RoomEvent.Disconnected, onDisconnected);
+      room.off(RoomEvent.MediaDevicesError, onMediaDevicesError);
+    };
+  }, [room]);
 
 
   useEffect(() => {
@@ -34,12 +57,70 @@ export default function Page() {
     setUser(JSON.parse(userData))
   }, [router])
 
-  const handleStartSession = () => {
-    setIsAgentActive(true)
-    setOpen(false)
-    // Here you would integrate with LiveKit to start the session
-    // For now, we'll just activate the sphere
-    console.log('Starting AI session...')
+  const checkMediaPermissions = async (): Promise<boolean> => {
+    try {
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the stream immediately as we only needed it for permission
+      stream.getTracks().forEach(track => track.stop());
+      return true;
+    } catch (error) {
+      console.error('Media permission error:', error);
+      window.alert('Microphone access is required for voice sessions. Please allow microphone access to continue.');
+      return false;
+    }
+  };
+
+  const handleSessionState = async () => {
+    if (sessionStarted && room.state === 'connected') {
+      // Disconnect session
+      room.disconnect();
+      setSessionStarted(false);
+      setIsConnecting(false);
+    } else {
+      // Start new session
+      try {
+        setIsConnecting(true);
+        setOpen(false);
+        
+        // Check media permissions first
+        const hasPermissions = await checkMediaPermissions();
+        if (!hasPermissions) {
+          setIsConnecting(false);
+          return;
+        }
+        
+        const server_url = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+        if (!server_url) {
+          throw new Error("Server URL not found");
+        }
+
+        // Create session and get token
+        const response = await apiClient.createSession();
+        if (response.error) {
+          throw new Error(response.error);
+        }
+        
+        if (!response.data) {
+          throw new Error('No session data received');
+        }
+        console.log('Connection details:', response.data);
+
+        await room.connect(server_url, response.data.token);
+
+        // Enable microphone and connect to room
+        await room.localParticipant.setMicrophoneEnabled(true, undefined, {
+          preConnectBuffer: true,
+        });
+        
+        setSessionStarted(true);
+        setIsConnecting(false);
+      } catch (error) {
+        console.error('Session creation failed:', error);
+        window.alert('Failed to start session');
+        setIsConnecting(false);
+      }
+    }
   }
 
   if (!isAuthenticated) {
@@ -72,66 +153,16 @@ export default function Page() {
         <div className="flex flex-1 flex-col relative">
           <SidebarTrigger onClick={()=>setOpen(!open)} className="bg-gray-100 p-4 mt-2 ml-2" />
           <div className="@container/main flex flex-1 justify-center items-center flex-col gap-8 p-8">
-            {/* Main AI Agent Display */}
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Hey {user.name}!</h1>
-              <p className="text-sm text-gray-600 max-w-2xl">
-                meet <span className="text-orange-400">Miso</span> , your compassionate AI-powered companion
-              </p>
-            </div>
-
-            {/* AI Agent Sphere */}
-            <AIAgentSphere 
-              isActive={isAgentActive}
-              onActivate={handleStartSession}
-              size="xl"
+          <RoomContext.Provider value={room}>
+            <RoomAudioRenderer/>
+            <StartAudio label="Start Audio" />
+            <SessionView 
+              user={user} 
+              sessionStarted={sessionStarted} 
+              isConnecting={isConnecting}
+              handleSessionState={handleSessionState} 
             />
-
-            {/* Session Status */}
-            {isAgentActive && (
-              <button
-                onClick={() => setIsAgentActive(false)}
-                className="px-4 py-2 rounded-4xl bg-red-600 hover:bg-orange-700 text-white transition-colors flex items-center justify-center"
-              >
-                <IconX height={20} className="mr-2" width={20} />
-                End Session
-              </button>
-            )}
-
-            {/* Additional Info */}
-            {!isAgentActive && 
-              <div className="grid md:grid-cols-3 gap-6 max-w-4xl">
-                <div className="text-center p-4">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Voice-First</h3>
-                  <p className="text-gray-600 text-xs">Natural voice conversations with AI that understands and responds with empathy</p>
-                </div>
-  
-                <div className="text-center p-4">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Compassionate</h3>
-                  <p className="text-gray-600 text-xs">Designed with empathy and understanding to provide a safe space for emotional support</p>
-                </div>
-  
-                <div className="text-center p-4">
-                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Private & Secure</h3>
-                  <p className="text-gray-600 text-xs">Your conversations are private and secure, with full control over your data</p>
-                </div>
-              </div>
-            }
+          </RoomContext.Provider>
           </div>
         </div>
       </SidebarInset>

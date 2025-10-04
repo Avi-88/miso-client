@@ -12,12 +12,9 @@ export interface User {
 }
 
 export interface Session {
-  id: string
   room_name: string
   token: string
   session_id: string
-  is_resume?: boolean
-  previous_session_id?: string
 }
 
 export interface SignInRequest {
@@ -36,6 +33,72 @@ export interface CreateSessionRequest {
 }
 
 export class ApiClient {
+  private async refreshToken(): Promise<string | null> {
+    const refreshToken = localStorage.getItem('refresh_token')
+    
+    if (!refreshToken) {
+      return null
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      })
+
+      if (!response.ok) {
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('refresh_token')
+        localStorage.removeItem('user')
+        window.location.href = '/auth/signin'
+        return null
+      }
+
+      const data = await response.json()
+      localStorage.setItem('auth_token', data.access_token)
+      
+      if (data.refresh_token) {
+        localStorage.setItem('refresh_token', data.refresh_token)
+      }
+      
+      return data.access_token
+    } catch (error) {
+      console.error('Token refresh failed:', error)
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('refresh_token')
+      localStorage.removeItem('user')
+      window.location.href = '/auth/signin'
+      return null
+    }
+  }
+
+  private isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const currentTime = Math.floor(Date.now() / 1000)
+      return payload.exp < currentTime
+    } catch {
+      return true
+    }
+  }
+
+  private async getValidToken(): Promise<string | null> {
+    let token = localStorage.getItem('auth_token')
+    
+    if (!token) {
+      return null
+    }
+
+    if (this.isTokenExpired(token)) {
+      token = await this.refreshToken()
+    }
+
+    return token
+  }
+
   private getAuthHeaders(token?: string): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -48,7 +111,62 @@ export class ApiClient {
     return headers
   }
 
-  async signIn(credentials: SignInRequest): Promise<ApiResponse<{ access_token: string; user: User }>> {
+  private async makeAuthenticatedRequest<T>(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<ApiResponse<T>> {
+    try {
+      const token = await this.getValidToken()
+      
+      if (!token) {
+        return { error: 'Authentication required' }
+      }
+
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...this.getAuthHeaders(token),
+          ...options.headers,
+        },
+      })
+
+      if (response.status === 401) {
+        // Token might be invalid, try refreshing once more
+        const newToken = await this.refreshToken()
+        if (newToken) {
+          const retryResponse = await fetch(url, {
+            ...options,
+            headers: {
+              ...this.getAuthHeaders(newToken),
+              ...options.headers,
+            },
+          })
+          
+          if (!retryResponse.ok) {
+            const error = await retryResponse.text()
+            return { error }
+          }
+          
+          const data = await retryResponse.json()
+          return { data }
+        } else {
+          return { error: 'Authentication failed' }
+        }
+      }
+
+      if (!response.ok) {
+        const error = await response.text()
+        return { error }
+      }
+
+      const data = await response.json()
+      return { data }
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  }
+
+  async signIn(credentials: SignInRequest): Promise<ApiResponse<{ access_token: string; user: User, refresh_token: string }>> {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/signin`, {
         method: 'POST',
@@ -88,43 +206,24 @@ export class ApiClient {
     }
   }
 
-  async createSession(token: string, request: CreateSessionRequest = {}): Promise<ApiResponse<Session>> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/create-session`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(token),
-        body: JSON.stringify(request),
-      })
-
-      if (!response.ok) {
-        const error = await response.text()
-        return { error }
-      }
-
-      const data = await response.json()
-      return { data }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : 'Unknown error' }
-    }
+  async createSession(request: CreateSessionRequest = {}): Promise<ApiResponse<Session>> {
+    return this.makeAuthenticatedRequest<Session>(`${API_BASE_URL}/api/create-session`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    })
   }
 
-  async getSessionHistory(token: string): Promise<ApiResponse<{ sessions: any[] }>> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/session-history`, {
-        method: 'GET',
-        headers: this.getAuthHeaders(token),
-      })
+  async getSessionHistory(): Promise<ApiResponse<{ sessions: any[] }>> {
+    return this.makeAuthenticatedRequest<{ sessions: any[] }>(`${API_BASE_URL}/api/session-history`, {
+      method: 'GET',
+    })
+  }
 
-      if (!response.ok) {
-        const error = await response.text()
-        return { error }
-      }
-
-      const data = await response.json()
-      return { data }
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : 'Unknown error' }
-    }
+  logout(): void {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('refresh_token')
+    localStorage.removeItem('user')
+    window.location.href = '/auth/signin'
   }
 }
 

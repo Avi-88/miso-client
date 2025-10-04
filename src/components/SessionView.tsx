@@ -1,21 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-// import { AnimatePresence, motion } from 'motion/react';
 import {
   type AgentState,
   type ReceivedChatMessage,
   useRoomContext,
   useVoiceAssistant,
 } from '@livekit/components-react';
-// import { toastAlert } from '@/components/alert-toast';
-// import { AgentControlBar } from '@/components/livekit/agent-control-bar/agent-control-bar';
-// import { ChatEntry } from '@/components/livekit/chat/chat-entry';
-// import { ChatMessageView } from '@/components/livekit/chat/chat-message-view';
-// import { MediaTiles } from '@/components/livekit/media-tiles';
-import useChatAndTranscription from '@/hooks/useChatAndTranscription';
-import { AppConfig } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { AIAgentSphere } from './ai-agent-sphere';
+import { IconX } from "@tabler/icons-react"
 
 
 function isAgentAvailable(agentState: AgentState) {
@@ -23,27 +16,21 @@ function isAgentAvailable(agentState: AgentState) {
 }
 
 interface SessionViewProps {
-  appConfig: AppConfig;
-  disabled: boolean;
   sessionStarted: boolean;
+  isConnecting?: boolean;
+  handleSessionState: () => void;
+  user: any
 }
 
 export const SessionView = ({
-  appConfig,
-  disabled,
   sessionStarted,
-  ref,
+  isConnecting = false,
+  handleSessionState,
+  user,
 }: React.ComponentProps<'div'> & SessionViewProps) => {
   const { state: agentState } = useVoiceAssistant();
-  const [chatOpen, setChatOpen] = useState(false);
-  const { messages, send } = useChatAndTranscription();
   const room = useRoomContext();
 
-
-
-  async function handleSendMessage(message: string) {
-    await send(message);
-  }
 
   useEffect(() => {
     if (sessionStarted) {
@@ -54,23 +41,8 @@ export const SessionView = ({
               ? 'Agent did not join the room. '
               : 'Agent connected but did not complete initializing. ';
 
-          alert({
-            title: 'Session ended',
-            description: (
-              <p className="w-full">
-                {reason}
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="https://docs.livekit.io/agents/start/voice-ai/"
-                  className="whitespace-nowrap underline"
-                >
-                  See quickstart guide
-                </a>
-                .
-              </p>
-            ),
-          });
+          window.alert("Agent timeout");
+          console.log("this maybe",reason)
           room.disconnect();
         }
       }, 20_000);
@@ -79,98 +51,72 @@ export const SessionView = ({
     }
   }, [agentState, sessionStarted, room]);
 
-  const { supportsChatInput, supportsVideoInput, supportsScreenShare } = appConfig;
-  const capabilities = {
-    supportsChatInput,
-    supportsVideoInput,
-    supportsScreenShare,
-  };
-
   return (
-    <section
-      ref={ref}
-      inert={disabled}
-      className={cn(
-        'opacity-0',
-        // prevent page scrollbar
-        // when !chatOpen due to 'translate-y-20'
-        !chatOpen && 'max-h-svh overflow-hidden'
-      )}
-    >
-      <ChatMessageView
-        className={cn(
-          'mx-auto min-h-svh w-full max-w-2xl px-3 pt-32 pb-40 transition-[opacity,translate] duration-300 ease-out md:px-0 md:pt-36 md:pb-48',
-          chatOpen ? 'translate-y-0 opacity-100 delay-200' : 'translate-y-20 opacity-0'
-        )}
-      >
-        <div className="space-y-3 whitespace-pre-wrap">
-          <AnimatePresence>
-            {messages.map((message: ReceivedChatMessage) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 1, height: 'auto', translateY: 0.001 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-              >
-                <ChatEntry hideName key={message.id} entry={message} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </ChatMessageView>
-
-      <div className="bg-background mp-12 fixed top-0 right-0 left-0 h-32 md:h-36">
-        {/* skrim */}
-        <div className="from-background absolute bottom-0 left-0 h-12 w-full translate-y-full bg-gradient-to-b to-transparent" />
-      </div>
-
-      <MediaTiles chatOpen={chatOpen} />
-
-      <div className="bg-background fixed right-0 bottom-0 left-0 z-50 px-3 pt-2 pb-3 md:px-12 md:pb-12">
-        <motion.div
-          key="control-bar"
-          initial={{ opacity: 0, translateY: '100%' }}
-          animate={{
-            opacity: sessionStarted ? 1 : 0,
-            translateY: sessionStarted ? '0%' : '100%',
-          }}
-          transition={{ duration: 0.3, delay: sessionStarted ? 0.5 : 0, ease: 'easeOut' }}
-        >
-          <div className="relative z-10 mx-auto w-full max-w-2xl">
-            {appConfig.isPreConnectBufferEnabled && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{
-                  opacity: sessionStarted && messages.length === 0 ? 1 : 0,
-                  transition: {
-                    ease: 'easeIn',
-                    delay: messages.length > 0 ? 0 : 0.8,
-                    duration: messages.length > 0 ? 0.2 : 0.5,
-                  },
-                }}
-                aria-hidden={messages.length > 0}
-                className={cn(
-                  'absolute inset-x-0 -top-12 text-center',
-                  sessionStarted && messages.length === 0 && 'pointer-events-none'
+      <div className="">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Hey {user.name}!</h1>
+              <p className="text-sm text-gray-600 max-w-2xl">
+                meet <span className="text-orange-400">Miso</span> , your compassionate AI-powered companion
+              </p>
+            </div>
+            <div className="relative z-10 mx-auto w-full max-w-2xl">
+                <AIAgentSphere 
+                    isActive={sessionStarted && isAgentAvailable(agentState)}
+                    onActivate={isConnecting ? undefined : handleSessionState}
+                    size="xl"
+                />
+                
+                {isConnecting && (
+                  <div className="mt-4 text-center">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                      <span className="text-sm text-gray-600">Connecting...</span>
+                    </div>
+                  </div>
                 )}
-              >
-                <p className="animate-text-shimmer inline-block !bg-clip-text text-sm font-semibold text-transparent">
-                  Agent is listening, ask it a question
-                </p>
-              </motion.div>
-            )}
-
-            <AgentControlBar
-              capabilities={capabilities}
-              onChatOpenChange={setChatOpen}
-              onSendMessage={handleSendMessage}
-            />
-          </div>
-          {/* skrim */}
-          <div className="from-background border-background absolute top-0 left-0 h-12 w-full -translate-y-full bg-gradient-to-t to-transparent" />
-        </motion.div>
+                {sessionStarted && (
+                <button
+                    onClick={() => handleSessionState()}
+                    className="px-4 py-2 rounded-4xl bg-red-600 hover:bg-orange-700 text-white transition-colors flex items-center justify-center"
+                >
+                    <IconX height={20} className="mr-2" width={20} />
+                    End Session
+                </button>
+                )}
+            </div>
+            {!sessionStarted && 
+                <div className="grid md:grid-cols-3 gap-6 max-w-4xl">
+                    <div className="text-center p-4">
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">Voice-First</h3>
+                    <p className="text-gray-600 text-xs">Natural voice conversations with AI that understands and responds with empathy</p>
+                    </div>
+    
+                    <div className="text-center p-4">
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">Compassionate</h3>
+                    <p className="text-gray-600 text-xs">Designed with empathy and understanding to provide a safe space for emotional support</p>
+                    </div>
+    
+                    <div className="text-center p-4">
+                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                        <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">Private & Secure</h3>
+                    <p className="text-gray-600 text-xs">Your conversations are private and secure, with full control over your data</p>
+                    </div>
+                </div>
+                }
       </div>
-    </section>
   );
 };

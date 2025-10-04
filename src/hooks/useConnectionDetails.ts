@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { decodeJwt } from 'jose';
 import { ConnectionDetails } from '@/lib/types';
-import { AppConfig } from '@/lib/types';
+import { apiClient } from '@/lib/api';
 
 const ONE_MINUTE_IN_MILLISECONDS = 60 * 1000;
 
-export default function useConnectionDetails(appConfig: AppConfig) {
+export default function useConnectionDetails() {
   // Generate room connection details, including:
   //   - The Room name
   //   - An Access Token to permit the user to join the room
@@ -18,33 +18,33 @@ export default function useConnectionDetails(appConfig: AppConfig) {
 
   const fetchConnectionDetails = useCallback(async () => {
     setConnectionDetails(null);
-    const url = new URL(
-      process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api/create-session',
-      window.location.origin
-    );
-
-    let data: ConnectionDetails;
+    
     try {
-      const res = await fetch(url.toString(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Sandbox-Id': appConfig.sandboxId ?? '',
-        }
-      });
-      data = await res.json();
+      const response = await apiClient.createSession();
+      
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      
+      if (!response.data) {
+        throw new Error('No session data received');
+      }
+
+      // Map the Session response to ConnectionDetails format
+      const connectionDetails: ConnectionDetails = {
+        room_name: response.data.room_name,
+        token: response.data.token,
+        session_id: response.data.session_id
+      };
+
+      setConnectionDetails(connectionDetails);
+      return connectionDetails;
     } catch (error) {
       console.error('Error fetching connection details:', error);
-      throw new Error('Error fetching connection details!');
+      throw new Error(error instanceof Error ? error.message : 'Error fetching connection details!');
     }
-
-    setConnectionDetails(data);
-    return data;
   }, []);
 
-  useEffect(() => {
-    fetchConnectionDetails();
-  }, [fetchConnectionDetails]);
 
   const isConnectionDetailsExpired = useCallback(() => {
     const token = connectionDetails?.token;
