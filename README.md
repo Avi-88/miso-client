@@ -109,6 +109,10 @@ miso-client/
 
 ## Key Features
 
+### Voice-to-Voice pipeline using LiveKit
+
+<img width="1155" height="630" alt="image" src="https://github.com/user-attachments/assets/88fce1fc-a889-439b-873d-cf7a496d1548" />
+
 ### Authentication Flow
 
 The application uses HTTP-only cookies for secure authentication:
