@@ -9,6 +9,7 @@ import {
 } from '@livekit/components-react';
 import { AIAgentSphere } from './ai-agent-sphere';
 import { IconX , IconPhoneOff} from "@tabler/icons-react"
+import { apiClient } from '@/lib/api';
 
 
 function isAgentAvailable(agentState: AgentState) {
@@ -19,12 +20,14 @@ interface SessionViewProps {
   sessionStarted: boolean;
   isConnecting?: boolean;
   handleSessionState: () => void;
+  sessionId?: string;
 }
 
 export const SessionView = ({
   sessionStarted,
   isConnecting = false,
   handleSessionState,
+  sessionId,
 }: React.ComponentProps<'div'> & SessionViewProps) => {
   const [user, setUser] = React.useState<any>(null);
 
@@ -40,22 +43,31 @@ export const SessionView = ({
 
   useEffect(() => {
     if (sessionStarted) {
-      const timeout = setTimeout(() => {
+      const timeout = setTimeout(async () => {
         if (!isAgentAvailable(agentState)) {
           const reason =
             agentState === 'connecting'
               ? 'Agent did not join the room. '
               : 'Agent connected but did not complete initializing. ';
 
-          window.alert("Agent timeout");
-          console.log("this maybe",reason)
+          // Clean up empty session if we have a session ID
+          if (sessionId) {
+            try {
+              await apiClient.deleteSession(sessionId);
+              console.log('Cleaned up empty session due to agent timeout:', sessionId);
+            } catch (error) {
+              console.error('Failed to cleanup empty session:', error);
+            }
+          }
+
+          window.alert("Agent timeout - session has been cleaned up");
           room.disconnect();
         }
       }, 20_000);
 
       return () => clearTimeout(timeout);
     }
-  }, [agentState, sessionStarted, room]);
+  }, [agentState, sessionStarted, room, sessionId]);
 
   return (
       <div className="flex flex-col justify-center h-full items-center">
@@ -73,10 +85,11 @@ export const SessionView = ({
                     isActive={sessionStarted && isAgentAvailable(agentState)}
                     onActivate={isConnecting ? undefined : handleSessionState}
                     isConnecting={isConnecting}
+                    agentState={agentState}
                     size="xl"
                 />
                 
-                {isConnecting && (
+                {(isConnecting ||( agentState === 'connecting')) && (
                   <div className="mt-4 text-center">
                     <div className="flex items-center justify-center space-x-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>

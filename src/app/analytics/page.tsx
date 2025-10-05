@@ -1,28 +1,23 @@
-import React from 'react'
+'use client'
 
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
-import { SectionCards } from "@/components/section-cards"
-import { SiteHeader } from "@/components/site-header"
-import { AuthenticatedLayout } from "@/components/AuthenticatedLayout"
-import data from "../dashboard/data.json"
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 function Analytics() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to dashboard since analytics is work in progress
+    router.replace('/dashboard')
+  }, [router])
+
   return (
-    <AuthenticatedLayout>
-      <SiteHeader />
-      <div className="flex flex-1 flex-col">
-        <div className="@container/main flex flex-1 flex-col gap-2">
-          <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-            <SectionCards />
-            <div className="px-4 lg:px-6">
-              <ChartAreaInteractive />
-            </div>
-            <DataTable data={data} />
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <p className="text-gray-600">Redirecting to dashboard...</p>
       </div>
-    </AuthenticatedLayout>
+    </div>
   )
 }
 

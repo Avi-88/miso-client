@@ -7,6 +7,9 @@ import {
   IconTrash,
   type Icon,
 } from "@tabler/icons-react"
+import { useRouter } from 'next/navigation'
+import { apiClient } from '@/lib/api'
+import { useState } from 'react'
 
 import {
   DropdownMenu,
@@ -42,6 +45,30 @@ export function NavDocuments({
   }
 }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
+
+  const handleResumeSession = (sessionId: string) => {
+    router.push(`/dashboard?resume=${sessionId}`)
+  }
+
+  const handleDeleteSession = async (sessionId: string) => {
+    if (!confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await apiClient.deleteSession(sessionId)
+      if (response.error) {
+        alert('Failed to delete session: ' + response.error)
+      } else {
+        // Refresh the page to update the session list
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Delete session error:', error)
+      alert('Failed to delete session')
+    }
+  }
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -51,7 +78,7 @@ export function NavDocuments({
           <SidebarMenuItem key={session.id}>
             <SidebarMenuButton asChild>
               <a href={`/session/${session.id}`}>
-                <span className="truncate">{session.title}</span>
+                <span className="truncate text-xs">{session.title}</span>
               </a>
             </SidebarMenuButton>
             <DropdownMenu>
@@ -73,12 +100,12 @@ export function NavDocuments({
                   <IconFolder />
                   <span>View Details</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleResumeSession(session.id)}>
                   <IconShare3 />
                   <span>Resume</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem variant="destructive" onClick={() => handleDeleteSession(session.id)}>
                   <IconTrash />
                   <span>Delete</span>
                 </DropdownMenuItem>

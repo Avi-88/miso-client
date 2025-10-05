@@ -2,26 +2,12 @@
 
 import * as React from "react"
 import {
-  IconCamera,
-  IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
+  IconPhoneSpark,
   IconInnerShadowTop,
-  IconListDetails,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUsers,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-sessions"
 import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -36,102 +22,17 @@ import {
 
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
-      title: "Dashboard",
+      title: "New chat",
       url: "/dashboard",
-      icon: IconDashboard,
+      icon: IconPhoneSpark,
     },
     // {
-    //   title: "Lifecycle",
-    //   url: "#",
-    //   icon: IconListDetails,
+    //   title: "Analytics",
+    //   url: "/analytics", ---- ( WIP )
+    //   icon: IconChartBar,
     // },
-    {
-      title: "Analytics",
-      url: "/analytics",
-      icon: IconChartBar,
-    },
-    // {
-    //   title: "Projects",
-    //   url: "#",
-    //   icon: IconFolder,
-    // },
-    // {
-    //   title: "Team",
-    //   url: "#",
-    //   icon: IconUsers,
-    // },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
   ],
 }
 
@@ -172,13 +73,13 @@ export function AppSidebar({ user, sessions, pagination, loadingMore, onLoadMore
           />
         ))}
         {pagination?.has_next && (
-          <div className="px-2 py-1">
+          <div className="px-2 py-1 group-data-[collapsible=icon]:hidden">
             <button
               onClick={onLoadMore}
               disabled={loadingMore}
-              className="w-full text-sm text-gray-600 hover:text-gray-800 py-2 px-3 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-xs text-orange-600 hover:bg-orange-300 hover:text-white bg-orange-200 py-2 px-3 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loadingMore ? 'Loading...' : 'Load More Sessions'}
+              {loadingMore ? 'Loading...' : 'More'}
             </button>
           </div>
         )}

@@ -34,9 +34,36 @@ export interface CreateSessionRequest {
 
 export class ApiClient {
 
+  private async refreshToken(): Promise<boolean> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Update user data in localStorage if provided
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
+        return true
+      }
+      
+      return false
+    } catch (error) {
+      console.error('Token refresh failed:', error)
+      return false
+    }
+  }
+
   private async makeAuthenticatedRequest<T>(
     url: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    retryOnAuth = true
   ): Promise<ApiResponse<T> & { status?: number }> {
     try {
       const response = await fetch(url, {
@@ -48,8 +75,23 @@ export class ApiClient {
         },
       })
 
+      if (response.status === 401 && retryOnAuth) {
+        // Try to refresh token
+        const refreshSuccess = await this.refreshToken()
+        
+        if (refreshSuccess) {
+          // Retry the original request once
+          return this.makeAuthenticatedRequest(url, options, false)
+        } else {
+          // Refresh failed, clear user data and redirect
+          localStorage.removeItem('user')
+          window.location.href = '/auth/signin'
+          return { error: 'Authentication failed', status: 401 }
+        }
+      }
+
       if (response.status === 401) {
-        // Authentication failed - return with status code
+        // Authentication failed after retry - return with status code
         return { error: 'Authentication failed', status: 401 }
       }
 
@@ -114,6 +156,20 @@ export class ApiClient {
     return this.makeAuthenticatedRequest<Session>(`${API_BASE_URL}/api/create-session`, {
       method: 'POST',
       body: JSON.stringify(request),
+    })
+  }
+
+  async resumeSession(sessionId: string): Promise<ApiResponse<Session>> {
+    return this.makeAuthenticatedRequest<Session>(`${API_BASE_URL}/api/resume-session`, {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId }),
+    })
+  }
+
+  async deleteSession(sessionId: string): Promise<ApiResponse<{ message: string; session_id: string }>> {
+    return this.makeAuthenticatedRequest<{ message: string; session_id: string }>(`${API_BASE_URL}/api/delete-session`, {
+      method: 'DELETE',
+      body: JSON.stringify({ session_id: sessionId }),
     })
   }
 

@@ -6,18 +6,23 @@ import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-
 import { apiClient } from '@/lib/api';
 import { SessionView } from "@/components/SessionView"
 import { AuthenticatedLayout } from "@/components/AuthenticatedLayout"
+import { useSearchParams } from "next/navigation";
 
 
 export default function Page() {
   const room = useMemo(() => new Room(), []);
+  const searchParams = useSearchParams();
+  const resumeSessionId = searchParams.get('resume');
   const [sessionStarted, setSessionStarted] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     const onDisconnected = () => {
       console.log("disconnected")
       setSessionStarted(false);
       setIsConnecting(false);
+      setCurrentSessionId(null);
     };
     const onMediaDevicesError = (error: Error) => {
       console.log("media error", error.message);
@@ -30,11 +35,18 @@ export default function Page() {
     };
   }, [room]);
 
+  // Auto-start session if resume parameter is present
+  useEffect(() => {    
+    if (resumeSessionId && !sessionStarted && !isConnecting) {
+      console.log('Auto-starting resume session:', resumeSessionId);
+      handleSessionState();
+    }
+  }, [resumeSessionId, sessionStarted, isConnecting]);
+
   const checkMediaPermissions = async (): Promise<boolean> => {
     try {
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Stop the stream immediately as we only needed it for permission
       stream.getTracks().forEach(track => track.stop());
       return true;
     } catch (error) {
@@ -51,7 +63,7 @@ export default function Page() {
       setSessionStarted(false);
       setIsConnecting(false);
     } else {
-      // Start new session
+      // Start new or resume session
       try {
         setIsConnecting(true);
         
@@ -67,8 +79,19 @@ export default function Page() {
           throw new Error("Server URL not found");
         }
 
-        // Create session and get token
-        const response = await apiClient.createSession();
+        let response;
+        if (resumeSessionId) {
+          // Resume existing session
+          console.log('Resuming session:', resumeSessionId);
+          response = await apiClient.resumeSession(resumeSessionId);
+          // Clear the URL parameter after using it
+          window.history.replaceState({}, document.title, '/dashboard');
+        } else {
+          // Create new session
+          console.log('Creating new session');
+          response = await apiClient.createSession();
+        }
+
         if (response.error) {
           throw new Error(response.error);
         }
@@ -77,6 +100,9 @@ export default function Page() {
           throw new Error('No session data received');
         }
         console.log('Connection details:', response.data);
+
+        // Store the session ID for cleanup if needed
+        setCurrentSessionId(response.data.session_id);
 
         await room.connect(server_url, response.data.token);
 
@@ -88,7 +114,7 @@ export default function Page() {
         setSessionStarted(true);
         setIsConnecting(false);
       } catch (error) {
-        console.error('Session creation failed:', error);
+        console.error('Session creation/resume failed:', error);
         window.alert('Failed to start session');
         setIsConnecting(false);
       }
@@ -103,7 +129,8 @@ export default function Page() {
         <SessionView 
           sessionStarted={sessionStarted} 
           isConnecting={isConnecting}
-          handleSessionState={handleSessionState} 
+          handleSessionState={handleSessionState}
+          sessionId={currentSessionId || undefined}
         />
       </RoomContext.Provider>
     </AuthenticatedLayout>

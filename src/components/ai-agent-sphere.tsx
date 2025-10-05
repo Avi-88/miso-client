@@ -8,6 +8,7 @@ import { Track } from 'livekit-client'
 interface AIAgentSphereProps {
   isActive?: boolean
   isConnecting?: boolean
+  agentState?: string
   onActivate?: () => void
   className?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -23,6 +24,7 @@ const sizeClasses = {
 export function AIAgentSphere({ 
   isActive = false, 
   isConnecting,
+  agentState,
   onActivate, 
   className,
   size = 'xl'
@@ -80,7 +82,7 @@ export function AIAgentSphere({
           }}
         />
 
-        {(isConnecting && !isActive) &&
+        {(isConnecting ||( agentState === 'connecting')) &&
           <div className='absolute inset-0 flex items-center justify-center'>
             <span className="relative flex size-8">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
@@ -131,7 +133,7 @@ export function AIAgentSphere({
       </div>
 
       {/* Status Text */}
-      {(!isActive && !isConnecting) &&
+      {(!isActive && !isConnecting && ( agentState !== 'connecting')) &&
         <div className="text-center">
           <p className={cn(
             "text-xs font-medium mt-2 transition-colors duration-300 text-orange-400"
@@ -140,7 +142,7 @@ export function AIAgentSphere({
           </p>
         </div>
       }
-      {isConnecting &&
+      {(isConnecting ||( agentState === 'connecting')) &&
         <div className="text-center">
           <p className={cn(
             "text-xs font-medium mt-2 transition-colors duration-300 text-orange-400"

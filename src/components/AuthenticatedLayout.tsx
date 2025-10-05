@@ -22,40 +22,28 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const [pagination, setPagination] = useState<any>(null)
   const [loadingMore, setLoadingMore] = useState(false)
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
 
   useEffect(() => {
     const checkAuthAndFetchData = async () => {
       try {
-        // Try to fetch user sessions to verify authentication via HTTP-only cookies
         const sessionsResponse = await apiClient.getUserSessions(1, 10)
-        
-        // Check if it's specifically an authentication error (401)
-        if (sessionsResponse.error && (sessionsResponse as any).status === 401) {
-          // Authentication failed, redirect to signin
-          router.push('/auth/signin')
-          return
-        }
-        
-        // Get user data from localStorage
         const userData = localStorage.getItem('user')
-        if (!userData) {
-          // No user data cached, redirect to signin
+        if (sessionsResponse.error && (sessionsResponse as any).status === 401 && !userData) {
           router.push('/auth/signin')
           return
         }
         
-        const parsedUser = JSON.parse(userData)
-        setUser(parsedUser)
-        setIsAuthenticated(true)
-        
-        // If sessions fetch was successful, use the data
+        if(userData){
+          const parsedUser = JSON.parse(userData)
+          setUser(parsedUser)
+          setIsAuthenticated(true)
+        }
+
         if (sessionsResponse.data) {
           setSessions(sessionsResponse.data.sessions_by_month || [])
           setPagination(sessionsResponse.data.pagination || null)
         } else {
-          // Sessions fetch failed due to network/server error, but user is authenticated
-          // Continue with empty sessions - user can try again later
           console.warn('Failed to fetch sessions:', sessionsResponse.error)
           setSessions([])
           setPagination(null)
@@ -93,13 +81,11 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
           )
           
           if (existingMonthIndex >= 0) {
-            // Merge sessions for existing month
             mergedSessions[existingMonthIndex].sessions = [
               ...mergedSessions[existingMonthIndex].sessions,
               ...newMonth.sessions
             ]
           } else {
-            // Add new month
             mergedSessions.push(newMonth)
           }
         })
@@ -118,10 +104,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
-          <svg className="animate-spin h-8 w-8 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>

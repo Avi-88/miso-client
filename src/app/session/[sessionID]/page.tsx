@@ -3,10 +3,8 @@
 import { useState, useEffect, use } from 'react'
 import { AuthenticatedLayout } from '@/components/AuthenticatedLayout'
 import { apiClient } from '@/lib/api'
+import { cn } from '@/lib/utils'
 
-interface slugProp {
-  sessionID: string
-}
 
 export default function Session({ params }: { params: Promise<{ sessionID: string }> }) {
 
@@ -68,11 +66,15 @@ export default function Session({ params }: { params: Promise<{ sessionID: strin
   return (
     <AuthenticatedLayout>
       <div className="w-full max-w-7xl mx-auto p-6">
-        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {sessionData.title || 'Session Details'}
-          </h1>
+          <div className='flex justify-start items-center'>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {sessionData.title || 'Session Details'}
+            </h1>
+            <span className={cn('ml-6 text-xs px-2 py-1 rounded-full', sessionData.status === 'COMPLETED' ? 'bg-green-100' : sessionData.status === 'ERROR' && 'bg-red-100')}>
+              {sessionData.status}
+            </span>
+          </div>
           <p className="text-gray-600">
             {new Date(sessionData.started_at).toLocaleDateString('en-US', {
               weekday: 'long',
@@ -84,10 +86,7 @@ export default function Session({ params }: { params: Promise<{ sessionID: strin
             })}
           </p>
         </div>
-
-        {/* Metrics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {/* Duration Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -102,7 +101,6 @@ export default function Session({ params }: { params: Promise<{ sessionID: strin
             </div>
           </div>
 
-          {/* Mood Score Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -117,7 +115,6 @@ export default function Session({ params }: { params: Promise<{ sessionID: strin
             </div>
           </div>
 
-          {/* Topics Count Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -132,7 +129,6 @@ export default function Session({ params }: { params: Promise<{ sessionID: strin
             </div>
           </div>
 
-          {/* Word Count Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -148,51 +144,44 @@ export default function Session({ params }: { params: Promise<{ sessionID: strin
           </div>
         </div>
 
-        {/* Additional Content Sections */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Session Summary */}
           {sessionData.summary && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Session Summary</h3>
               <p className="text-gray-700 leading-relaxed">{sessionData.summary}</p>
             </div>
           )}
-
-          {/* Key Topics */}
           {sessionData.key_topics && sessionData.key_topics.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Topics Discussed</h3>
-              <div className="flex flex-wrap gap-2">
-                {sessionData.key_topics.map((topic: string, index: number) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
-                  >
-                    {topic}
-                  </span>
-                ))}
+            <div className="bg-white flex flex-col justify-start items-center rounded-xl shadow-sm border border-gray-100 p-6">
+              <div className='w-full'>
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Key Topics Discussed</h3>
+                <div className="flex flex-wrap gap-2">
+                  {sessionData.key_topics.map((topic: string, index: number) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                    >
+                      {topic}
+                    </span>
+                  ))}
+                </div>
               </div>
+              <div className='w-full mt-4'>
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Primary Emotions</h3>
+                <div className="flex flex-wrap gap-2">
+                  {sessionData.primary_emotions.map((emotion: string, index: number) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+                    >
+                      {emotion}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
             </div>
           )}
-
-          {/* Primary Emotions */}
-          {sessionData.primary_emotions && sessionData.primary_emotions.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Primary Emotions</h3>
-              <div className="flex flex-wrap gap-2">
-                {sessionData.primary_emotions.map((emotion: string, index: number) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
-                  >
-                    {emotion}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Breakthrough Moments */}
           {sessionData.breakthrough_moments && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Insights</h3>
