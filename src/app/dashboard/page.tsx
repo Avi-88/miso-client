@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, Suspense } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Room, RoomEvent } from 'livekit-client';
 import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-react';
 import { apiClient } from '@/lib/api';
@@ -9,13 +9,51 @@ import { AuthenticatedLayout } from "@/components/AuthenticatedLayout"
 import { useSearchParams } from "next/navigation";
 import { toast } from 'sonner';
 
-function DashboardContent() {
+
+export default function Page() {
   const room = useMemo(() => new Room(), []);
   const searchParams = useSearchParams();
   const resumeSessionId = searchParams.get('resume');
   const [sessionStarted, setSessionStarted] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onDisconnected = () => {
+      setSessionStarted(false);
+      setIsConnecting(false);
+      setCurrentSessionId(null);
+    };
+    const onMediaDevicesError = (error: Error) => {
+      toast.error(`Media device error: ${error.message}`);
+    };
+    room.on(RoomEvent.MediaDevicesError, onMediaDevicesError);
+    room.on(RoomEvent.Disconnected, onDisconnected);
+    return () => {
+      room.off(RoomEvent.Disconnected, onDisconnected);
+      room.off(RoomEvent.MediaDevicesError, onMediaDevicesError);
+    };
+  }, [room]);
+
+  // Auto-start session if resume parameter is present
+  useEffect(() => {    
+    if (resumeSessionId && !sessionStarted && !isConnecting) {
+      handleSessionState();
+    }
+  }, [resumeSessionId, sessionStarted, isConnecting]);
+
+  const checkMediaPermissions = async (): Promise<boolean> => {
+    try {
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      return true;
+    } catch (error) {
+      console.error('Media permission error:', error);
+      toast.error('Microphone access is required for voice sessions. Please allow microphone access to continue.');
+      return false;
+    }
+  };
 
   const handleSessionState = async () => {
     if (sessionStarted && room.state === 'connected') {
@@ -42,8 +80,12 @@ function DashboardContent() {
 
         let response;
         if (resumeSessionId) {
+          // Resume existing session
           response = await apiClient.resumeSession(resumeSessionId);
+          // Clear the URL parameter after using it
+          window.history.replaceState({}, document.title, '/dashboard');
         } else {
+          // Create new session
           response = await apiClient.createSession();
         }
 
@@ -67,49 +109,12 @@ function DashboardContent() {
         
         setSessionStarted(true);
         setIsConnecting(false);
-      } catch {
+      } catch (error) {
         toast.error('Failed to start session');
         setIsConnecting(false);
       }
     }
   }
-
-  useEffect(() => {
-    const onDisconnected = () => {
-      setSessionStarted(false);
-      setIsConnecting(false);
-      setCurrentSessionId(null);
-    };
-    const onMediaDevicesError = (error: Error) => {
-      toast.error(`Media device error: ${error.message}`);
-    };
-    room.on(RoomEvent.MediaDevicesError, onMediaDevicesError);
-    room.on(RoomEvent.Disconnected, onDisconnected);
-    return () => {
-      room.off(RoomEvent.Disconnected, onDisconnected);
-      room.off(RoomEvent.MediaDevicesError, onMediaDevicesError);
-    };
-  }, [room]);
-
-  // Auto-start session if resume parameter is present
-  useEffect(() => {    
-    if (resumeSessionId && !sessionStarted && !isConnecting) {
-      handleSessionState();
-    }
-  }, [resumeSessionId, sessionStarted, isConnecting, handleSessionState]);
-
-  const checkMediaPermissions = async (): Promise<boolean> => {
-    try {
-      // Request microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop());
-      return true;
-    } catch (error) {
-      console.error('Media permission error:', error);
-      toast.error('Microphone access is required for voice sessions. Please allow microphone access to continue.');
-      return false;
-    }
-  };
 
   return (
     <AuthenticatedLayout>
@@ -124,13 +129,5 @@ function DashboardContent() {
         />
       </RoomContext.Provider>
     </AuthenticatedLayout>
-  )
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <DashboardContent />
-    </Suspense>
   )
 }
