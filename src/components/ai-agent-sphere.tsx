@@ -39,10 +39,10 @@ export function AIAgentSphere({
   // Get agent's audio track directly
   const remoteParticipants = useRemoteParticipants()
   const agentParticipant = remoteParticipants[0]
-  const agentAudioTrack = agentParticipant?.getTrackPublication(Track.Source.Microphone)?.track || null
+  const agentAudioTrack = agentParticipant?.getTrackPublication(Track.Source.Microphone)?.track
   
-  // Get volume from the agent's audio track
-  const volume = useTrackVolume(agentAudioTrack)
+  // Get volume from the agent's audio track 
+  const volume = useTrackVolume(agentAudioTrack as any)
 
   useEffect(() => {
     if (isActive && volume !== undefined) {
