@@ -10,6 +10,18 @@ import {
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api'
 import { useState } from 'react'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 import {
   DropdownMenu,
@@ -52,21 +64,17 @@ export function NavDocuments({
   }
 
   const handleDeleteSession = async (sessionId: string) => {
-    if (!confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
-      return
-    }
-
     try {
       const response = await apiClient.deleteSession(sessionId)
       if (response.error) {
-        alert('Failed to delete session: ' + response.error)
+        toast.error('Failed to delete session: ' + response.error)
       } else {
+        toast.success('Session deleted successfully')
         // Refresh the page to update the session list
         window.location.reload()
       }
-    } catch (error) {
-      console.error('Delete session error:', error)
-      alert('Failed to delete session')
+    } catch {
+      toast.error('Failed to delete session')
     }
   }
 
@@ -105,10 +113,31 @@ export function NavDocuments({
                   <span>Resume</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={() => handleDeleteSession(session.id)}>
-                  <IconTrash />
-                  <span>Delete</span>
-                </DropdownMenuItem>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
+                      <IconTrash />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Session</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete this session? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        className="bg-red-600 hover:bg-red-700" 
+                        onClick={() => handleDeleteSession(session.id)}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>

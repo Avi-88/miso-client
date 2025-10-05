@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import { SessionView } from "@/components/SessionView"
 import { AuthenticatedLayout } from "@/components/AuthenticatedLayout"
 import { useSearchParams } from "next/navigation";
+import { toast } from 'sonner';
 
 
 export default function Page() {
@@ -19,13 +20,12 @@ export default function Page() {
 
   useEffect(() => {
     const onDisconnected = () => {
-      console.log("disconnected")
       setSessionStarted(false);
       setIsConnecting(false);
       setCurrentSessionId(null);
     };
     const onMediaDevicesError = (error: Error) => {
-      console.log("media error", error.message);
+      toast.error(`Media device error: ${error.message}`);
     };
     room.on(RoomEvent.MediaDevicesError, onMediaDevicesError);
     room.on(RoomEvent.Disconnected, onDisconnected);
@@ -38,7 +38,6 @@ export default function Page() {
   // Auto-start session if resume parameter is present
   useEffect(() => {    
     if (resumeSessionId && !sessionStarted && !isConnecting) {
-      console.log('Auto-starting resume session:', resumeSessionId);
       handleSessionState();
     }
   }, [resumeSessionId, sessionStarted, isConnecting]);
@@ -51,7 +50,7 @@ export default function Page() {
       return true;
     } catch (error) {
       console.error('Media permission error:', error);
-      window.alert('Microphone access is required for voice sessions. Please allow microphone access to continue.');
+      toast.error('Microphone access is required for voice sessions. Please allow microphone access to continue.');
       return false;
     }
   };
@@ -82,13 +81,11 @@ export default function Page() {
         let response;
         if (resumeSessionId) {
           // Resume existing session
-          console.log('Resuming session:', resumeSessionId);
           response = await apiClient.resumeSession(resumeSessionId);
           // Clear the URL parameter after using it
-          window.history.replaceState({}, document.title, '/dashboard');
+          // window.history.replaceState({}, document.title, '/dashboard');
         } else {
           // Create new session
-          console.log('Creating new session');
           response = await apiClient.createSession();
         }
 
@@ -99,7 +96,6 @@ export default function Page() {
         if (!response.data) {
           throw new Error('No session data received');
         }
-        console.log('Connection details:', response.data);
 
         // Store the session ID for cleanup if needed
         setCurrentSessionId(response.data.session_id);
@@ -113,9 +109,8 @@ export default function Page() {
         
         setSessionStarted(true);
         setIsConnecting(false);
-      } catch (error) {
-        console.error('Session creation/resume failed:', error);
-        window.alert('Failed to start session');
+      } catch {
+        toast.error('Failed to start session');
         setIsConnecting(false);
       }
     }

@@ -2,27 +2,25 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api'
+import { toast } from 'sonner'
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
 
     try {
       const response = await apiClient.signIn({ email, password })
       
       if (response.error) {
-        setError(response.error)
+        // Show specific error message from server
+        toast.error(response.error)
         return
       }
 
@@ -30,11 +28,16 @@ export default function SignIn() {
         // Store only user data in localStorage (tokens are in HTTP-only cookies)
         localStorage.setItem('user', JSON.stringify(response.data.user))
         
+        toast.success('Sign in successful! Redirecting...')
+        
         // Redirect to main app
-        window.location.href = '/dashboard'
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 1000)
       }
     } catch (err) {
-      setError('An unexpected error occurred')
+      console.error('Sign in error:', err)
+      toast.error('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -61,12 +64,6 @@ export default function SignIn() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign In To Your Account.</h1>
             <p className="text-gray-600">Let&apos;s sign in to your account and get started.</p>
           </div>
-          
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-              {error}
-            </div>
-          )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -164,7 +161,7 @@ export default function SignIn() {
             </Link>
           </div>
 
-          <div className="mt-8">
+          {/* <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
@@ -196,7 +193,7 @@ export default function SignIn() {
                 </svg>
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

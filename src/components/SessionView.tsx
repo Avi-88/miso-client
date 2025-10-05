@@ -10,6 +10,7 @@ import {
 import { AIAgentSphere } from './ai-agent-sphere';
 import { IconX , IconPhoneOff} from "@tabler/icons-react"
 import { apiClient } from '@/lib/api';
+import { toast } from 'sonner';
 
 
 function isAgentAvailable(agentState: AgentState) {
@@ -54,13 +55,12 @@ export const SessionView = ({
           if (sessionId) {
             try {
               await apiClient.deleteSession(sessionId);
-              console.log('Cleaned up empty session due to agent timeout:', sessionId);
             } catch (error) {
-              console.error('Failed to cleanup empty session:', error);
+              // Silent fail - session cleanup is not critical for user experience
             }
           }
 
-          window.alert("Agent timeout - session has been cleaned up");
+          toast.error("Agent timeout - session has been cleaned up");
           room.disconnect();
         }
       }, 20_000);

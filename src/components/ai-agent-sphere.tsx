@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { useRemoteParticipants, useTrackVolume } from '@livekit/components-react'
+import { AnimatedShinyText } from './ui/animated-shiny-text'
 import { Track } from 'livekit-client'
+import {
+  IconSparkles
+} from "@tabler/icons-react"
 
 interface AIAgentSphereProps {
   isActive?: boolean
@@ -131,26 +135,40 @@ export function AIAgentSphere({
           }}
         />
       </div>
+      <div className='h-10 mt-4 flex flex-col justify-center items-center'>
+        {(agentState === 'thinking') && 
+          <AnimatedShinyText className="inline-flex  text-xs items-center justify-center px-4 py-1 transition ease-out hover:text-orange-600 hover:duration-300 hover:dark:text-orange-400">
+            <IconSparkles className="mr-1 size-4 transition-transform text-orange-400 duration-100 ease-in-out group-hover:translate-x-0.5" />
+            <span className='text-orange-400'>thinking...</span>
+          </AnimatedShinyText>
+        }
+        {(agentState === 'listening') && 
+          <AnimatedShinyText className="inline-flex  text-xs items-center justify-center px-4 py-1 transition ease-out hover:text-orange-600 hover:duration-300 hover:dark:text-orange-400">
+            <IconSparkles className="mr-1 size-4 transition-transform text-orange-400 duration-100 ease-in-out group-hover:translate-x-0.5" />
+            <span className='text-orange-400'>listening...</span>
+          </AnimatedShinyText>
+        }
+        {(!isActive && !isConnecting && ( agentState !== 'connecting')) &&
+          <div className="text-center">
+            <p className={cn(
+              "text-xs font-medium mt-2 transition-colors duration-300 text-orange-400"
+            )}>
+              Click the sphere to start conversing
+            </p>
+          </div>
+        }
+        {(isConnecting ||( agentState === 'connecting')) &&
+          <div className="text-center">
+            <p className={cn(
+              "text-xs font-medium transition-colors duration-300 text-orange-400"
+            )}>
+              Waiting for agent to connect...
+            </p>
+          </div>
+        }
+      </div>
 
-      {/* Status Text */}
-      {(!isActive && !isConnecting && ( agentState !== 'connecting')) &&
-        <div className="text-center">
-          <p className={cn(
-            "text-xs font-medium mt-2 transition-colors duration-300 text-orange-400"
-          )}>
-            Click the sphere to start conversing
-          </p>
-        </div>
-      }
-      {(isConnecting ||( agentState === 'connecting')) &&
-        <div className="text-center">
-          <p className={cn(
-            "text-xs font-medium mt-2 transition-colors duration-300 text-orange-400"
-          )}>
-            Waiting for agent to connect...
-          </p>
-        </div>
-      }
+      
     </div>
   )
 }

@@ -19,13 +19,12 @@ export default function Session({ params }: { params: Promise<{ sessionID: strin
         setIsLoading(true);
         const resp = await apiClient.getSessionData(sessionID)
         if(resp.error){
-          console.log("Error fetching session data")
           throw resp.error;
         }
         setIsLoading(false);
         setSessionData(resp.data.session);
-      } catch (error) {
-        console.log("Error fetching session data")
+      } catch {
+        // Error already shown via toast in apiClient
       }
     }
 
@@ -33,9 +32,6 @@ export default function Session({ params }: { params: Promise<{ sessionID: strin
 
   }, [sessionID])
   
-  const handleDisconnect = () => {
-    setSessionData(null)
-  }
 
   if (isLoading) {
     return (

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api'
+import { toast } from 'sonner'
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false)
@@ -11,34 +12,30 @@ export default function SignUp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
-    setSuccess('')
 
     try {
       const response = await apiClient.signUp({ username, email, password })
       
       if (response.error) {
-        setError(response.error)
+        toast.error(response.error)
         return
       }
 
       if (response.data) {
-        setSuccess('Account created successfully! Redirecting to sign in...')
+        toast.success('Account created successfully! Redirecting to sign in...')
         
         // Redirect to signin page after successful signup
         setTimeout(() => {
           router.push('/auth/signin')
         }, 2000)
       }
-    } catch (err) {
-      setError('An unexpected error occurred')
+    } catch {
+      toast.error('An unexpected error occurred. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -68,18 +65,6 @@ export default function SignUp() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Account.</h1>
             <p className="text-gray-600">Let&apos;s create your account and get started.</p>
           </div>
-          
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-              {error}
-            </div>
-          )}
-          
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
-              {success}
-            </div>
-          )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
