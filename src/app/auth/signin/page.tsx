@@ -27,9 +27,7 @@ export default function SignIn() {
       }
 
       if (response.data) {
-        // Store the token in localStorage
-        localStorage.setItem('auth_token', response.data.access_token)
-        localStorage.setItem('refresh_token', response.data.refresh_token)
+        // Store only user data in localStorage (tokens are in HTTP-only cookies)
         localStorage.setItem('user', JSON.stringify(response.data.user))
         
         // Redirect to main app

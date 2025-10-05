@@ -8,13 +8,12 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem('auth_token')
+    // Check if user data exists (authentication will be verified by AuthenticatedLayout)
     const user = localStorage.getItem('user')
     
-    if (token && user) {
-      // User is authenticated, redirect to session page
-      router.push('/session')
+    if (user) {
+      // User data exists, redirect to dashboard
+      router.push('/dashboard')
       return
     }
     

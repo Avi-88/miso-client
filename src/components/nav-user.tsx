@@ -40,8 +40,8 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const handleLogout = () => {
-    apiClient.logout()
+  const handleLogout = async () => {
+    await apiClient.logout()
   }
 
   return (

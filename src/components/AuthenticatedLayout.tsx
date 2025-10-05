@@ -27,11 +27,20 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   useEffect(() => {
     const checkAuthAndFetchData = async () => {
       try {
-        // Check authentication
-        const token = localStorage.getItem('auth_token')
-        const userData = localStorage.getItem('user')
+        // Try to fetch user sessions to verify authentication via HTTP-only cookies
+        const sessionsResponse = await apiClient.getUserSessions(1, 10)
         
-        if (!token || !userData) {
+        // Check if it's specifically an authentication error (401)
+        if (sessionsResponse.error && (sessionsResponse as any).status === 401) {
+          // Authentication failed, redirect to signin
+          router.push('/auth/signin')
+          return
+        }
+        
+        // Get user data from localStorage
+        const userData = localStorage.getItem('user')
+        if (!userData) {
+          // No user data cached, redirect to signin
           router.push('/auth/signin')
           return
         }
@@ -40,20 +49,22 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
         setUser(parsedUser)
         setIsAuthenticated(true)
         
-        // Fetch user sessions for sidebar
-        try {
-          const sessionsResponse = await apiClient.getUserSessions(1, 10)
-          if (sessionsResponse.data) {
-            setSessions(sessionsResponse.data.sessions_by_month || [])
-            setPagination(sessionsResponse.data.pagination || null)
-          }
-        } catch (error) {
-          console.error('Failed to fetch sessions:', error)
+        // If sessions fetch was successful, use the data
+        if (sessionsResponse.data) {
+          setSessions(sessionsResponse.data.sessions_by_month || [])
+          setPagination(sessionsResponse.data.pagination || null)
+        } else {
+          // Sessions fetch failed due to network/server error, but user is authenticated
+          // Continue with empty sessions - user can try again later
+          console.warn('Failed to fetch sessions:', sessionsResponse.error)
+          setSessions([])
+          setPagination(null)
         }
         
       } catch (error) {
         console.error('Auth check failed:', error)
-        router.push('/auth/signin')
+        // Network errors shouldn't redirect to signin, just show error state
+        setIsLoading(false)
       } finally {
         setIsLoading(false)
       }

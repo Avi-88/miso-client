@@ -33,146 +33,47 @@ export interface CreateSessionRequest {
 }
 
 export class ApiClient {
-  
-  private async refreshToken(): Promise<string | null> {
-    const refreshToken = localStorage.getItem('refresh_token')
-    
-    if (!refreshToken) {
-      return null
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      })
-
-      if (!response.ok) {
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('refresh_token')
-        localStorage.removeItem('user')
-        window.location.href = '/auth/signin'
-        return null
-      }
-
-      const data = await response.json()
-      localStorage.setItem('auth_token', data.access_token)
-      
-      if (data.refresh_token) {
-        localStorage.setItem('refresh_token', data.refresh_token)
-      }
-      
-      return data.access_token
-    } catch (error) {
-      console.error('Token refresh failed:', error)
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user')
-      window.location.href = '/auth/signin'
-      return null
-    }
-  }
-
-  private isTokenExpired(token: string): boolean {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const currentTime = Math.floor(Date.now() / 1000)
-      return payload.exp < currentTime
-    } catch {
-      return true
-    }
-  }
-
-  private async getValidToken(): Promise<string | null> {
-    let token = localStorage.getItem('auth_token')
-    
-    if (!token) {
-      return null
-    }
-
-    if (this.isTokenExpired(token)) {
-      token = await this.refreshToken()
-    }
-
-    return token
-  }
-
-  private getAuthHeaders(token?: string): HeadersInit {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    }
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-    
-    return headers
-  }
 
   private async makeAuthenticatedRequest<T>(
     url: string,
     options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
+  ): Promise<ApiResponse<T> & { status?: number }> {
     try {
-      const token = await this.getValidToken()
-      
-      if (!token) {
-        return { error: 'Authentication required' }
-      }
-
       const response = await fetch(url, {
         ...options,
+        credentials: 'include', // Include HTTP-only cookies
         headers: {
-          ...this.getAuthHeaders(token),
+          'Content-Type': 'application/json',
           ...options.headers,
         },
       })
 
       if (response.status === 401) {
-        // Token might be invalid, try refreshing once more
-        const newToken = await this.refreshToken()
-        if (newToken) {
-          const retryResponse = await fetch(url, {
-            ...options,
-            headers: {
-              ...this.getAuthHeaders(newToken),
-              ...options.headers,
-            },
-          })
-          
-          if (!retryResponse.ok) {
-            const error = await retryResponse.text()
-            return { error }
-          }
-          
-          const data = await retryResponse.json()
-          return { data }
-        } else {
-          return { error: 'Authentication failed' }
-        }
+        // Authentication failed - return with status code
+        return { error: 'Authentication failed', status: 401 }
       }
 
       if (!response.ok) {
         const error = await response.text()
-        return { error }
+        return { error, status: response.status }
       }
 
       const data = await response.json()
-      return { data }
+      return { data, status: response.status }
     } catch (error) {
       return { error: error instanceof Error ? error.message : 'Unknown error' }
     }
   }
 
-  async signIn(credentials: SignInRequest): Promise<ApiResponse<{ access_token: string; user: User, refresh_token: string }>> {
+  async signIn(credentials: SignInRequest): Promise<ApiResponse<{ user: User }>> {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/signin`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(credentials),
+        credentials: 'include', // Important: Include cookies in requests
       })
 
       if (!response.ok) {
@@ -191,7 +92,9 @@ export class ApiClient {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/signup`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(credentials),
       })
 
@@ -226,11 +129,20 @@ export class ApiClient {
     })
   }
 
-  logout(): void {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('refresh_token')
-    localStorage.removeItem('user')
-    window.location.href = '/auth/signin'
+  async logout(): Promise<void> {
+    try {
+      // Call signout endpoint to clear HTTP-only cookies
+      await fetch(`${API_BASE_URL}/auth/signout`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+    } catch (error) {
+      console.error('Logout request failed:', error)
+    } finally {
+      // Clear localStorage user data
+      localStorage.removeItem('user')
+      window.location.href = '/auth/signin'
+    }
   }
 }
 
