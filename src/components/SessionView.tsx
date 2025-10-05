@@ -8,7 +8,7 @@ import {
   useVoiceAssistant,
 } from '@livekit/components-react';
 import { AIAgentSphere } from './ai-agent-sphere';
-import { IconX } from "@tabler/icons-react"
+import { IconX , IconPhoneOff} from "@tabler/icons-react"
 
 
 function isAgentAvailable(agentState: AgentState) {
@@ -19,15 +19,21 @@ interface SessionViewProps {
   sessionStarted: boolean;
   isConnecting?: boolean;
   handleSessionState: () => void;
-  user: any
 }
 
 export const SessionView = ({
   sessionStarted,
   isConnecting = false,
   handleSessionState,
-  user,
 }: React.ComponentProps<'div'> & SessionViewProps) => {
+  const [user, setUser] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
   const { state: agentState } = useVoiceAssistant();
   const room = useRoomContext();
 
@@ -52,17 +58,21 @@ export const SessionView = ({
   }, [agentState, sessionStarted, room]);
 
   return (
-      <div className="flex flex-col justify-center items-center">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">Hey {user.name}!</h1>
-              <p className="text-sm text-gray-600 max-w-2xl">
-                meet <span className="text-orange-400">Miso</span> , your compassionate AI-powered companion
-              </p>
-            </div>
-            <div className="relative z-10 mx-auto w-full max-w-2xl">
+      <div className="flex flex-col justify-center h-full items-center">
+            {!sessionStarted &&             
+              <div className="text-center py-4">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">Hey {user?.username || 'there'}!</h1>
+                <p className="text-sm text-gray-600 max-w-2xl">
+                  meet <span className="text-orange-400">Miso</span> , your compassionate AI-powered companion
+                </p>
+              </div>
+            }
+
+            <div className="relative  flex-col justify-center items-center flex flex-1 z-10 mx-auto w-full max-w-2xl">
                 <AIAgentSphere 
                     isActive={sessionStarted && isAgentAvailable(agentState)}
                     onActivate={isConnecting ? undefined : handleSessionState}
+                    isConnecting={isConnecting}
                     size="xl"
                 />
                 
@@ -77,15 +87,15 @@ export const SessionView = ({
                 {sessionStarted && (
                 <button
                     onClick={() => handleSessionState()}
-                    className="px-4 py-2 rounded-4xl bg-red-600 hover:bg-orange-700 text-white transition-colors flex items-center justify-center"
+                    className="p-4 absolute bottom-[10%]  rounded-full bg-red-500/90 hover:bg-orange-700 text-white transition-colors flex items-center justify-center"
                 >
-                    <IconX height={20} className="mr-2" width={20} />
-                    End Session
+                    <IconPhoneOff height={20} className="mr-2" width={20} />
+                    end call
                 </button>
                 )}
             </div>
             {!sessionStarted && 
-                <div className="grid md:grid-cols-3 gap-6 max-w-4xl">
+                <div className="grid md:grid-cols-3 py-4 gap-6 max-w-4xl">
                     <div className="text-center p-4">
                     <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                         <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

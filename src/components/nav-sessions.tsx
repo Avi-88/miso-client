@@ -26,25 +26,32 @@ import {
 } from "@/components/ui/sidebar"
 
 export function NavDocuments({
-  items,title
+  sessionsGroup
 }: {
-  title: string,
-  items: {
-    name: string
-    url: string
-  }[]
+  sessionsGroup: {
+    month_name: string
+    month_key: string
+    sessions: {
+      id: string
+      title: string
+      started_at: string
+      status: string
+      mood_score?: number
+      duration?: number
+    }[]
+  }
 }) {
   const { isMobile } = useSidebar()
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>{title}</SidebarGroupLabel>
+      <SidebarGroupLabel>{sessionsGroup.month_name}</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
-          <SidebarMenuItem key={item.name}>
+        {sessionsGroup.sessions.map((session) => (
+          <SidebarMenuItem key={session.id}>
             <SidebarMenuButton asChild>
-              <a href={item.url}>
-                <span>{item.name}</span>
+              <a href={`/session/${session.id}`}>
+                <span className="truncate">{session.title}</span>
               </a>
             </SidebarMenuButton>
             <DropdownMenu>
@@ -58,17 +65,17 @@ export function NavDocuments({
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-24 rounded-lg"
+                className="w-32 rounded-lg"
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
                 <DropdownMenuItem>
                   <IconFolder />
-                  <span>Open</span>
+                  <span>View Details</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <IconShare3 />
-                  <span>Share</span>
+                  <span>Resume</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive">
@@ -79,12 +86,13 @@ export function NavDocuments({
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
-            <IconDots className="text-sidebar-foreground/70" />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        {sessionsGroup.sessions.length === 0 && (
+          <SidebarMenuItem>
+            <SidebarMenuButton disabled className="text-sidebar-foreground/50">
+              <span>No sessions</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        )}
       </SidebarMenu>
     </SidebarGroup>
   )

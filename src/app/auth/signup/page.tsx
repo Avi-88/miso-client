@@ -7,7 +7,7 @@ import { apiClient } from '@/lib/api'
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false)
-  const [name, setName] = useState('')
+  const [username, setUserName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -22,7 +22,7 @@ export default function SignUp() {
     setSuccess('')
 
     try {
-      const response = await apiClient.signUp({ name, email, password })
+      const response = await apiClient.signUp({ username, email, password })
       
       if (response.error) {
         setError(response.error)
@@ -84,7 +84,7 @@ export default function SignUp() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
+                User name
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -94,12 +94,12 @@ export default function SignUp() {
                 </div>
                 <input
                   type="text"
-                  id="name"
-                  name="name"
+                  id="username"
+                  name="username"
                   className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Enter your full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUserName(e.target.value)}
                   required
                 />
               </div>

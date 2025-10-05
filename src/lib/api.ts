@@ -8,7 +8,7 @@ export interface ApiResponse<T> {
 export interface User {
   id: string
   email: string
-  name?: string
+  username: string
 }
 
 export interface Session {
@@ -25,7 +25,7 @@ export interface SignInRequest {
 export interface SignUpRequest {
   email: string
   password: string
-  name?: string
+  username: string
 }
 
 export interface CreateSessionRequest {
@@ -214,8 +214,14 @@ export class ApiClient {
     })
   }
 
-  async getSessionHistory(): Promise<ApiResponse<{ sessions: any[] }>> {
-    return this.makeAuthenticatedRequest<{ sessions: any[] }>(`${API_BASE_URL}/api/session-history`, {
+  async getUserSessions(page: number = 1, pageSize: number = 10): Promise<ApiResponse<any>> {
+    return this.makeAuthenticatedRequest<any>(`${API_BASE_URL}/api/user-sessions?page=${page}&page_size=${pageSize}`, {
+      method: 'GET',
+    })
+  }
+
+  async getSessionData(session_id: string): Promise<ApiResponse<any>> {
+    return this.makeAuthenticatedRequest<any>(`${API_BASE_URL}/api/sessions/${session_id}`, {
       method: 'GET',
     })
   }

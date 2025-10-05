@@ -1,8 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import {
   IconCamera,
   IconChartBar,
@@ -137,26 +135,15 @@ const data = {
   ],
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar> ) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  user?: any
+  sessions?: any[]
+  pagination?: any
+  loadingMore?: boolean
+  onLoadMore?: () => void
+}
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const router = useRouter()
-
-  useEffect(() => {
-    // Check authentication
-    const token = localStorage.getItem('auth_token')
-    const userData = localStorage.getItem('user')
-    
-    if (!token || !userData) {
-      router.push('/auth/signin')
-      return
-    }
-    
-    setIsAuthenticated(true)
-    setUser(JSON.parse(userData))
-  }, [router])
+export function AppSidebar({ user, sessions, pagination, loadingMore, onLoadMore, ...props }: AppSidebarProps) {
 
 
   return (
@@ -178,8 +165,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar> ) 
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavDocuments title="Feb 3" items={data.documents} />
-        <NavDocuments title="Feb 4" items={data.documents} /> */}
+        {sessions && sessions.map((sessionGroup: any) => (
+          <NavDocuments 
+            key={sessionGroup.month_key} 
+            sessionsGroup={sessionGroup} 
+          />
+        ))}
+        {pagination?.has_next && (
+          <div className="px-2 py-1">
+            <button
+              onClick={onLoadMore}
+              disabled={loadingMore}
+              className="w-full text-sm text-gray-600 hover:text-gray-800 py-2 px-3 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingMore ? 'Loading...' : 'Load More Sessions'}
+            </button>
+          </div>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

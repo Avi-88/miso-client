@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-
+import { useRemoteParticipants, useTrackVolume } from '@livekit/components-react'
+import { Track } from 'livekit-client'
 
 interface AIAgentSphereProps {
   isActive?: boolean
+  isConnecting?: boolean
   onActivate?: () => void
   className?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -20,102 +22,133 @@ const sizeClasses = {
 
 export function AIAgentSphere({ 
   isActive = false, 
+  isConnecting,
   onActivate, 
   className,
   size = 'xl'
 }: AIAgentSphereProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const [scale, setScale] = useState(1)
+  
+  // Get agent's audio track directly
+  const remoteParticipants = useRemoteParticipants()
+  const agentParticipant = remoteParticipants[0]
+  const agentAudioTrack = agentParticipant?.getTrackPublication(Track.Source.Microphone)?.track || null
+  
+  // Get volume from the agent's audio track
+  const volume = useTrackVolume(agentAudioTrack)
 
-  // Radial gradient styles
-  const activeGradient = {
-    background: 'radial-gradient(circle, #f87171 0%, #fb923c 35%, #fbbf24 70%, #fde047 100%)'
-  }
-  
-  const dormantGradient = {
-    background: 'radial-gradient(circle, #d1d5db 0%, #e5e7eb 50%, #f3f4f6 100%)'
-  }
-  
-  const hoveredDormantGradient = {
-    background: 'radial-gradient(circle, #9ca3af 0%, #d1d5db 50%, #e5e7eb 100%)'
-  }
+  useEffect(() => {
+    if (isActive && volume !== undefined) {
+      const newScale = 1 + (volume * 0.3)
+      setScale(newScale)
+    } else {
+      setScale(1)
+    }
+  }, [volume, isActive])
 
   const sphereClasses = cn(
     sizeClasses[size],
-    "rounded-full cursor-pointer transition-all duration-500 ease-in-out transform",
-    "relative overflow-hidden shadow-lg",
-    isHovered && "scale-105",
+    "rounded-full cursor-pointer transform",
+    "relative",
     className
   )
-
-  const getGradientStyle = () => {
-    if (isActive) return activeGradient
-    if (isHovered) return hoveredDormantGradient
-    return dormantGradient
-  }
 
   return (
     <div className="flex flex-col items-center space-y-4">
       {/* AI Agent Sphere */}
       <div
         className={sphereClasses}
-        style={getGradientStyle()}
+        style={{
+          transform: isActive ? `scale(${scale})` : (isHovered && !isActive ? 'scale(1.05)' : 'scale(1)'),
+          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
         onClick={onActivate}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Inner glow effect */}
+        {/* Main sphere with exact gradient */}
         <div 
-          className="absolute inset-2 rounded-full transition-opacity duration-500"
+          className="absolute inset-0 rounded-full"
           style={{
-            background: isActive 
-              ? 'radial-gradient(circle, rgba(254, 240, 138, 0.4) 0%, rgba(251, 146, 60, 0.2) 50%, transparent 100%)'
-              : 'radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(243, 244, 246, 0.2) 50%, transparent 100%)',
-            opacity: isActive ? 1 : 0.6
+            background: isActive
+              ? 'radial-gradient(circle, hsla(17, 95%, 50%, 1) 9%, hsla(42, 94%, 57%, 1) 53%, hsla(0, 0%, 100%, 1) 89%)'
+              : 'radial-gradient(circle, hsla(0, 0%, 85%, 1) 9%, hsla(0, 0%, 90%, 1) 53%, hsla(0, 0%, 98%, 1) 89%)',
+            opacity: isActive ? 0.95 + (volume * 0.05) : (isHovered ? 0.9 : 0.85),
+            transition: 'background 0.5s ease-in-out, opacity 0.3s ease-in-out',
+            filter: 'blur(1px)' // Slight blur for softer edges
           }}
         />
-        
-        {/* Pulsing animation when active */}
-        {isActive && (
-          <div 
-            className="absolute inset-0 rounded-full animate-pulse"
-            style={{
-              background: 'radial-gradient(circle, rgba(251, 146, 60, 0.3) 0%, transparent 70%)'
-            }}
-          />
-        )}
-        
-        {/* Highlight shine */}
+
+        {(isConnecting && !isActive) &&
+          <div className='absolute inset-0 flex items-center justify-center'>
+            <span className="relative flex size-8">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75"></span>
+              <span className="relative inline-flex size-8 blur-xs rounded-full bg-orange-400"></span>
+            </span>
+          </div>
+        }
+
+        {/* Edge softener - creates the dispersed edge effect */}
         <div 
-          className="absolute top-4 left-4 w-8 h-8 rounded-full transition-all duration-500"
+          className="absolute inset-0 rounded-full"
           style={{
-            background: isActive 
-              ? 'radial-gradient(circle, rgba(254, 243, 199, 0.6) 0%, transparent 100%)'
-              : 'radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 100%)'
+            background: isActive
+              ? 'radial-gradient(circle, transparent 0%, transparent 75%, hsla(42, 94%, 57%, 0.4) 85%, transparent 100%)'
+              : 'radial-gradient(circle, transparent 0%, transparent 75%, hsla(0, 0%, 90%, 0.4) 85%, transparent 100%)',
+            filter: 'blur(8px)',
+            opacity: 0.8,
+            transition: 'background 0.5s ease-in-out, opacity 0.3s ease-in-out'
+          }}
+        />
+
+        {/* Outer glow layer */}
+        <div 
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: isActive
+              ? 'radial-gradient(circle, hsla(17, 95%, 50%, 0.6) 0%, hsla(42, 94%, 57%, 0.4) 40%, transparent 70%)'
+              : 'radial-gradient(circle, hsla(0, 0%, 85%, 0.5) 0%, hsla(0, 0%, 90%, 0.3) 40%, transparent 70%)',
+            transform: `scale(${isActive ? 1.8 + (volume * 0.3) : 1.6})`,
+            opacity: isActive ? 0.6 + (volume * 0.4) : (isHovered ? 0.5 : 0.4),
+            filter: 'blur(40px)',
+            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out, background 0.5s ease-in-out'
+          }}
+        />
+
+        {/* Soft blur overlay for depth */}
+        <div 
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: isActive
+              ? 'radial-gradient(circle, transparent 0%, hsla(17, 95%, 50%, 0.3) 50%, transparent 100%)'
+              : 'radial-gradient(circle, transparent 0%, hsla(0, 0%, 88%, 0.2) 50%, transparent 100%)',
+            filter: 'blur(20px)',
+            opacity: isActive ? 0.5 + (volume * 0.3) : 0.4,
+            transition: 'opacity 0.3s ease-in-out, background 0.5s ease-in-out'
           }}
         />
       </div>
 
       {/* Status Text */}
-      {!isActive &&
+      {(!isActive && !isConnecting) &&
         <div className="text-center">
           <p className={cn(
-            "text-xs font-medium transition-colors duration-300 text-orange-400"
+            "text-xs font-medium mt-2 transition-colors duration-300 text-orange-400"
           )}>
-            Click to start conversing
+            Click the sphere to start conversing
           </p>
         </div>
       }
-
-
-      {/* Activation Button */}
-      {/* {!isActive && (
-        <button
-          onClick={onActivate}
-          className="px-6 py-2 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
-        >
-          Start Session
-        </button>
-      )} */}
+      {isConnecting &&
+        <div className="text-center">
+          <p className={cn(
+            "text-xs font-medium mt-2 transition-colors duration-300 text-orange-400"
+          )}>
+            Waiting for agent to connect...
+          </p>
+        </div>
+      }
     </div>
   )
 }
