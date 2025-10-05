@@ -6,7 +6,7 @@ A Next.js-based frontend application for the Miso companion platform with real-t
 
 - Node.js 18+
 - npm or yarn package manager
-- Backend server running (see [backend README](../miso/README.md))
+- Backend server running (see [backend README](https://github.com/Avi-88/miso-server/blob/main/README.md))
 
 ## Features
 
@@ -282,4 +282,4 @@ For issues and questions:
 
 ---
 
-**Note**: This application requires the Miso backend server to be running. See the [backend README](../miso/README.md) for setup instructions.
+**Note**: This application requires the Miso backend server to be running. See the [backend README](https://github.com/Avi-88/miso-server/blob/main/README.md) for setup instructions.
