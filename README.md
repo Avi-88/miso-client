@@ -12,7 +12,7 @@ A Next.js-based frontend application for the Miso companion platform with real-t
 
 - **Speak your mind** - Real-time audio conversations with AI companion
 - **Conversation insights** - Detailed metrics and insights for each conversation
-- **Clen and modern UI** - Clutter free UI experience
+- **Clean and modern UI** - Clutter free UI experience
 - **Session Resume** - Continue previous conversations seamlessly
 - **Progress Tracking** - Visual dashboard with session history and metrics
 
@@ -117,7 +117,7 @@ The application uses HTTP-only cookies for secure authentication:
 2. **Session Management** - Automatic token refresh with fallback handling
 3. **Protected Routes** - Authenticated layout wrapper for secure pages
 
-[Screenshot placeholder: Sign in page with form fields and gradient background]
+
 
 ### Voice Therapy Sessions
 
@@ -231,41 +231,7 @@ theme: {
 }
 ```
 
-## Deployment
 
-### Vercel (Recommended)
-
-1. **Connect your repository to Vercel**
-2. **Add environment variables in Vercel dashboard**
-3. **Deploy automatically on git push**
-
-[Screenshot placeholder: Vercel deployment dashboard with environment variables]
-
-### Manual Deployment
-
-```bash
-# Build the application
-npm run build
-
-# Start production server
-npm start
-```
-
-### Docker Deployment
-
-```dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-RUN npm run build
-
-EXPOSE 3000
-
-CMD ["npm", "start"]
 ```
 
 ### Environment Variables for Production
@@ -292,15 +258,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 2. **Use app router file conventions**
 3. **Wrap with `AuthenticatedLayout` if authentication required**
 4. **Add proper metadata and SEO**
-
-### State Management
-
-The application uses React's built-in state management:
-
-- **useState** - Local component state
-- **useEffect** - Side effects and lifecycle
-- **Context** - Shared state when needed (LiveKit room context)
-- **Custom Hooks** - Reusable stateful logic
 
 ### API Error Handling
 
@@ -372,29 +329,6 @@ Enable debug mode for detailed logging:
 DEBUG=true npm run dev
 ```
 
-### Network Issues
-
-Check browser developer tools:
-1. **Network tab** - Verify API requests are reaching backend
-2. **Console tab** - Check for JavaScript errors
-3. **Application tab** - Inspect cookies and localStorage
-
-## Performance Optimization
-
-### Implemented Optimizations
-
-- **Next.js App Router** - Automatic code splitting and optimization
-- **Dynamic Imports** - Lazy loading of heavy components
-- **Image Optimization** - Next.js automatic image optimization
-- **Font Optimization** - Preloaded custom fonts
-
-### Monitoring
-
-Consider adding performance monitoring:
-
-- **Vercel Analytics** - Built-in performance metrics
-- **Web Vitals** - Core web vitals tracking
-- **Error Tracking** - Sentry or similar service
 
 ## Browser Support
 
