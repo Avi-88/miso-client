@@ -117,6 +117,7 @@ The application uses HTTP-only cookies for secure authentication:
 2. **Session Management** - Automatic token refresh with fallback handling
 3. **Protected Routes** - Authenticated layout wrapper for secure pages
 
+<img width="1362" height="727" alt="image" src="https://github.com/user-attachments/assets/46417105-e577-471e-9e1e-cdee9b656a4b" />
 
 
 ### Voice Therapy Sessions
@@ -127,7 +128,8 @@ Real-time voice interaction powered by LiveKit:
 2. **Voice Controls** - One-click start/stop session functionality
 3. **Real-time Audio** - Low-latency voice communication with AI therapist
 
-[Screenshot placeholder: Dashboard with large AI sphere and start session button]
+<img width="1362" height="729" alt="image" src="https://github.com/user-attachments/assets/19e2a8a0-bdfe-44fb-a072-e9da93fddb56" />
+
 
 ### Session Management
 
@@ -137,7 +139,7 @@ Comprehensive session tracking and analytics:
 2. **Resume Functionality** - Continue previous conversations with context
 3. **Session Analytics** - Detailed metrics including duration, mood, and engagement
 
-[Screenshot placeholder: Session details page with metric cards and charts]
+<img width="1362" height="729" alt="image" src="https://github.com/user-attachments/assets/5fcb50b4-b359-4bcd-8f29-52b1443d65b4" />
 
 ### Dashboard Overview
 
@@ -147,23 +149,8 @@ Modern, responsive dashboard interface:
 2. **Feature Cards** - Voice-first, compassionate, and secure highlights
 3. **Session Controls** - Easy access to start new or resume existing sessions
 
-[Screenshot placeholder: Full dashboard view with welcome message and feature cards]
+<img width="1362" height="727" alt="image" src="https://github.com/user-attachments/assets/c7731e34-2b32-44f8-b213-6cc0b777ac76" />
 
-## Components
-
-### Core Components
-
-- **`AuthenticatedLayout`** - Wrapper for protected pages with sidebar navigation
-- **`SessionView`** - Main therapy session interface with AI sphere
-- **`AIAgentSphere`** - Interactive sphere that responds to AI voice activity
-- **`NavSessions`** - Sidebar navigation with session history and controls
-
-### UI Components (shadcn/ui)
-
-- **`Dialog`** - Modal dialogs for confirmations and forms
-- **`AlertDialog`** - Confirmation dialogs for destructive actions
-- **`Sidebar`** - Collapsible navigation sidebar
-- **`Toast`** - Notification system using Sonner
 
 ## API Integration
 
@@ -202,37 +189,6 @@ await apiClient.deleteSession(sessionId)
 await apiClient.getSessions()
 ```
 
-## Styling
-
-The application uses:
-
-- **Tailwind CSS** - Utility-first CSS framework
-- **shadcn/ui** - High-quality, accessible component library
-- **Custom Gradients** - Orange to yellow gradients for branding
-- **Responsive Design** - Mobile-first approach with breakpoint variants
-
-### Theme Configuration
-
-```javascript
-// tailwind.config.js
-theme: {
-  extend: {
-    colors: {
-      orange: {
-        500: '#f97316',
-        600: '#ea580c',
-      },
-      yellow: {
-        500: '#eab308',
-        600: '#ca8a04',
-      }
-    }
-  }
-}
-```
-
-
-```
 
 ### Environment Variables for Production
 
@@ -259,6 +215,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
 3. **Wrap with `AuthenticatedLayout` if authentication required**
 4. **Add proper metadata and SEO**
 
+
 ### API Error Handling
 
 Centralized error handling with user-friendly messages:
@@ -274,28 +231,6 @@ if (response.error) {
 toast.success('Session created successfully!')
 ```
 
-## Testing
-
-### Unit Testing
-```bash
-npm run test
-# or
-yarn test
-```
-
-### E2E Testing
-```bash
-npm run test:e2e
-# or
-yarn test:e2e
-```
-
-### Type Checking
-```bash
-npm run type-check
-# or
-yarn type-check
-```
 
 ## Troubleshooting
 
@@ -321,14 +256,6 @@ yarn type-check
    - Check for missing dependencies
    - Verify all environment variables are set
 
-### Debug Mode
-
-Enable debug mode for detailed logging:
-
-```bash
-DEBUG=true npm run dev
-```
-
 
 ## Browser Support
 
@@ -344,17 +271,14 @@ Note: Voice features require modern browsers with WebRTC support.
 1. **Fork the repository**
 2. **Create a feature branch**
 3. **Follow existing code style and conventions**
-4. **Add appropriate tests**
-5. **Update documentation as needed**
-6. **Submit a pull request**
+4. **Update documentation as needed**
+5. **Submit a pull request**
 
 ## Support
 
 For issues and questions:
 1. Check this README and troubleshooting section
-2. Review browser console for errors
-3. Verify backend server status
-4. Create an issue in the project repository
+2. Create an issue in the project repository
 
 ---
 
