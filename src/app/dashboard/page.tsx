@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, Suspense } from "react"
 import { Room, RoomEvent } from 'livekit-client';
 import { RoomAudioRenderer, RoomContext, StartAudio } from '@livekit/components-react';
 import { apiClient } from '@/lib/api';
@@ -10,7 +10,7 @@ import { useSearchParams } from "next/navigation";
 import { toast } from 'sonner';
 
 
-export default function Page() {
+const Dashboard = () => {
   const room = useMemo(() => new Room(), []);
   const searchParams = useSearchParams();
   const resumeSessionId = searchParams.get('resume');
@@ -35,7 +35,6 @@ export default function Page() {
     };
   }, [room]);
 
-  // Auto-start session if resume parameter is present
   useEffect(() => {    
     if (resumeSessionId && !sessionStarted && !isConnecting) {
       handleSessionState();
@@ -44,7 +43,6 @@ export default function Page() {
 
   const checkMediaPermissions = async (): Promise<boolean> => {
     try {
-      // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(track => track.stop());
       return true;
@@ -57,16 +55,13 @@ export default function Page() {
 
   const handleSessionState = async () => {
     if (sessionStarted && room.state === 'connected') {
-      // Disconnect session
       room.disconnect();
       setSessionStarted(false);
       setIsConnecting(false);
     } else {
-      // Start new or resume session
       try {
         setIsConnecting(true);
         
-        // Check media permissions first
         const hasPermissions = await checkMediaPermissions();
         if (!hasPermissions) {
           setIsConnecting(false);
@@ -80,12 +75,9 @@ export default function Page() {
 
         let response;
         if (resumeSessionId) {
-          // Resume existing session
           response = await apiClient.resumeSession(resumeSessionId);
-          // Clear the URL parameter after using it
           window.history.replaceState({}, document.title, '/dashboard');
         } else {
-          // Create new session
           response = await apiClient.createSession();
         }
 
@@ -97,12 +89,10 @@ export default function Page() {
           throw new Error('No session data received');
         }
 
-        // Store the session ID for cleanup if needed
         setCurrentSessionId(response.data.session_id);
 
         await room.connect(server_url, response.data.token);
 
-        // Enable microphone and connect to room
         await room.localParticipant.setMicrophoneEnabled(true, undefined, {
           preConnectBuffer: true,
         });
@@ -129,5 +119,13 @@ export default function Page() {
         />
       </RoomContext.Provider>
     </AuthenticatedLayout>
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <Dashboard />
+    </Suspense>
   )
 }
