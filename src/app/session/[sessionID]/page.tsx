@@ -61,7 +61,7 @@ export default function Session({ params }: { params: Promise<{ sessionID: strin
 
   return (
     <AuthenticatedLayout>
-      <div className="w-full max-w-7xl mx-auto p-6">
+      <div className="w-full flex flex-col justify-start items-start max-w-7xl mx-auto p-6">
         <div className="mb-8">
           <div className='flex justify-start items-center'>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
